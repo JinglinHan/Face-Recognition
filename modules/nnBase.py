@@ -5,6 +5,8 @@ import torch.nn as nn
 class nnBaseModel(nn.Module):
     def __init__(self, faceData, label, netList):
         super(nnBaseModel, self).__init__()
+        torch.set_default_dtype(torch.float64)
+
         self.data = faceData
         self.label = label
         self.layers = nn.Sequential()

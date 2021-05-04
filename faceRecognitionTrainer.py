@@ -37,29 +37,37 @@ if __name__ == "__main__":
     processor = picProcessor(ID_name, ID, path)
     faceData = processor.generateData()
     label = processor.generateLabel()
-    pca = PCA(1000)
-    numOfPattern = max(label)
+    pca = PCA(1510)
+    numOfPattern = max(label) + 1
     numOfSamples = len(faceData)
     K = 10  # number of folds
 
-    pca.fit(faceData)
+    faceData = pca.fit_transform(faceData)
     faceDataTensor = torch.tensor(faceData)
     labelTensor = torch.tensor(label)
     randomIndex = torch.randperm(numOfSamples)
     faceDataFoldList = []
     labelFoldList = []
     for i in range(K):
-        faceDataFoldList.append(faceDataTensor[randomIndex[i * numOfSamples / K, (i+1) * numOfSamples / K - 1], :])
-        labelFoldList.append(labelTensor[randomIndex[i * numOfSamples / K, (i+1) * numOfSamples / K - 1]])
+        faceDataFoldList.append(faceDataTensor[randomIndex[int(i * numOfSamples / K): int((i+1) * numOfSamples / K)], :])
+        labelFoldList.append(labelTensor[randomIndex[int(i * numOfSamples / K): int((i+1) * numOfSamples / K)]])
 
     bestModel = None
     minLoss = 1e5
     maxRecog = 0
     for i in range(K):
-        trainData = torch.tensor([[]])
-        trainLabel = torch.tensor([])
+        if i == 0:
+            head = 1
+            trainData = faceDataFoldList[1]
+            trainLabel = labelFoldList[1]
+        else:
+            head = 0
+            trainData = faceDataFoldList[0]
+            trainLabel = labelFoldList[0]
         for j in range(K):
             if j == i:
+                continue
+            elif j == head:
                 continue
             else:
                 trainData = torch.cat((trainData, faceDataFoldList[j]), dim=0)
@@ -67,7 +75,7 @@ if __name__ == "__main__":
         validData = faceDataFoldList[i]
         validLabel = labelFoldList[i]
 
-        model = nnBaseModel(trainData, trainLabel, [1000, 500, 250, 125, numOfPattern])
+        model = nnBaseModel(trainData, trainLabel, [1510, 500, 250, 125, numOfPattern])
         model.train_bfgs(200, 0.001)
         validLoss = nn.CrossEntropyLoss()(model(validData), validLabel)
         result = torch.max(model(validData), dim = 1)[1]
@@ -76,6 +84,6 @@ if __name__ == "__main__":
             minLoss = validLoss
             bestModel = model
             torch.save(model, 'bestModel.pkl')
-            maxRecog = sum(result.transpose()[0] == validLabel)
+            maxRecog = sum(result.eq(validLabel)) / len(validLabel)
 
     print(maxRecog)

@@ -5,7 +5,7 @@ import os
 from PIL import Image
 import cv2
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 
 class picProcessor():
@@ -31,14 +31,15 @@ class picProcessor():
         return y
 
     def generateData(self):
-        x = np.zeros(shape=(1512, 498200))
+        x = np.zeros(shape=(1510, 9216))
         x_dirs = os.listdir(self.path)
         for i in range(len(x_dirs)):
             img = Image.open(self.path + x_dirs[i])
             im_grey = img.convert("L")
-            new_img = im_grey.resize((530, 940))  # 采用了图片长宽平均值
+            new_img = im_grey.resize((72, 128), Image.ANTIALIAS)  # 采用了图片长宽平均值
+
             im_mat = np.matrix(new_img)
-            im_mat = im_mat.reshape((1, 530 * 940))
+            im_mat = im_mat.reshape((1, 72 * 128))
             #    new_img.save('C:\\Users\\w\\Desktop\\PR_project\\dataReshape\\' + x_file)
             x[i] = im_mat
         return x
