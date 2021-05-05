@@ -76,7 +76,7 @@ if __name__ == "__main__":
         validLabel = labelFoldList[i]
 
         model = nnBaseModel(trainData, trainLabel, [1510, 500, 250, 125, numOfPattern])
-        model.train_bfgs(200, 0.001)
+        model.train_bfgs(500, 0.001)
         validLoss = nn.CrossEntropyLoss()(model(validData), validLabel)
         result = torch.max(model(validData), dim = 1)[1]
 
