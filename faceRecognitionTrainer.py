@@ -2,10 +2,11 @@ import torch
 import torch.nn as nn
 import numpy as np
 from sklearn.decomposition import PCA
-from modules import picProcessor, nnBaseModel
+from modules import picProcessor, nnBaseModel, faceDetect
 
 
 if __name__ == "__main__":
+
     ID_name = {'01': '陈立江', 'PT2000005': '张林秀',
                'PT2000006': '南佳豪', 'PT2000012': '姜雨薇',
                'PT2000054': '熊敏捷', 'PT2000437': '李聪昊',
@@ -33,15 +34,16 @@ if __name__ == "__main__":
            'SY2041107', 'SY2041117', 'SY2041128', 'SY2041130', 'ZY2002114',
            'ZY2002120', 'ZY2002322', 'ZY2002327', 'ZY2002403', 'ZY2002412',
            'ZY2002613', 'ZY2041131']
-    path = 'image_database/'
+    path = 'image_database2/'
+    faceDetect(path)
     processor = picProcessor(ID_name, ID, path)
     faceData = processor.generateData()
     label = processor.generateLabel()
-    pca = PCA(1510)
+
     numOfPattern = max(label) + 1
     numOfSamples = len(faceData)
     K = 10  # number of folds
-
+    pca = PCA(1510)
     faceData = pca.fit_transform(faceData)
     faceDataTensor = torch.tensor(faceData)
     labelTensor = torch.tensor(label)
@@ -75,11 +77,10 @@ if __name__ == "__main__":
         validData = faceDataFoldList[i]
         validLabel = labelFoldList[i]
 
-        model = nnBaseModel(trainData, trainLabel, [1510, 500, 250, 125, numOfPattern])
+        model = nnBaseModel(trainData, trainLabel, [4915, 1000, 500, 125, numOfPattern])
         model.train_bfgs(500, 0.001)
         validLoss = nn.CrossEntropyLoss()(model(validData), validLabel)
         result = torch.max(model(validData), dim = 1)[1]
-
         if validLoss < minLoss:
             minLoss = validLoss
             bestModel = model
